@@ -1,0 +1,7 @@
+Question,Type,Option A,Option B,Option C,Option D,Correct Answer
+"What port is standard for unencrypted HTTP web traffic?",mcq,80,443,8080,21,80
+"Which company developed the React JavaScript framework?",mcq,Google,Meta,Microsoft,Amazon,Meta
+"What does CPU stand for in computer architecture?",mcq,Central Processing Unit,Computer Power Utility,Core Process Unit,Central Pipeline Unit,Central Processing Unit
+"Name the Python creator who originally developed the language at CWI in the Netherlands.",text,,,,,Guido van Rossum
+"Which sorting algorithm has an average time complexity of O(n log n) and uses a divide-and-conquer pivot strategy?",mcq,Bubble Sort,Insertion Sort,Quick Sort,Selection Sort,Quick Sort
+"What command is used in Linux terminal to show the current working directory?",text,,,,,pwd

@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Build output
+/dist/
+build/
+out/
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Cache
+.cache/
+.parcel-cache/
+.eslintcache
+
+# Editor / OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+
+# Firebase / local runtime
+.firebase/
+*.local
+
+# Coverage / test artifacts
+coverage/
+
+# Optional: lockfile exceptions if needed
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
