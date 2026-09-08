@@ -9,7 +9,7 @@ import { parseTeamListFromFile } from '../../utils/fileParser';
 import { SAMPLE_TEAMS } from '../../utils/sampleData';
 
 export const TeamSetup = () => {
-  const { session, leaderboard, updateSession, updateLeaderboard, clearAllTeams } = useGame();
+  const { session, leaderboard, updateSession, updateLeaderboard, clearAllTeams, removeTeam } = useGame();
   const { isDark } = useTheme();
   const fileInputRef = useRef(null);
 
@@ -46,15 +46,8 @@ export const TeamSetup = () => {
   };
 
   const handleRemoveTeam = (teamName) => {
-    const updated = teamOrder.filter(t => t !== teamName);
-    updateSession({
-      teamOrder: updated,
-      currentTeamIndex: Math.min(session.currentTeamIndex, Math.max(0, updated.length - 1))
-    });
-
-    const newLeaderboard = { ...leaderboard };
-    delete newLeaderboard[teamName];
-    updateLeaderboard(newLeaderboard);
+    removeTeam(teamName);
+    setUploadSuccess(`Removed team "${teamName}".`);
   };
 
   const handleMove = (index, direction) => {

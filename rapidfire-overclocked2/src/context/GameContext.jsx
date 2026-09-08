@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { db, isConfigured as isFirebaseConfigured, ref, onValue, set, update } from '../firebase';
-import { SAMPLE_QUESTIONS, SAMPLE_TEAMS } from '../utils/sampleData';
+import { SAMPLE_TEAMS } from '../utils/sampleData';
 import { useSoundEffects } from '../hooks/useSoundEffects';
 
 const GameContext = createContext();
@@ -9,7 +9,7 @@ const BROADCAST_CHANNEL_NAME = 'overclocked_rapidfire_sync';
 
 const DEFAULT_SESSION = {
   status: 'setup', // 'setup' | 'active' | 'ended'
-  questions: SAMPLE_QUESTIONS,
+  questions: [],
   currentQuestionIndex: 0,
   teamOrder: [], // Empty by default: admin configures actual teams
   currentTeamIndex: 0,
@@ -27,11 +27,26 @@ const DEFAULT_SESSION = {
 
 const DEFAULT_LEADERBOARD = {};
 
+const hasLegacyAutoLoadedQuestions = (questions) => (
+  Array.isArray(questions)
+  && questions.length === 12
+  && questions.every((question, index) => question?.id === `q-${index + 1}`)
+);
+
 export const GameProvider = ({ children }) => {
   const [session, setSession] = useState(() => {
     try {
       const saved = localStorage.getItem('rapidfire_session');
-      return saved ? { ...DEFAULT_SESSION, ...JSON.parse(saved) } : DEFAULT_SESSION;
+      if (!saved) return DEFAULT_SESSION;
+
+      const savedSession = JSON.parse(saved);
+      return {
+        ...DEFAULT_SESSION,
+        ...savedSession,
+        questions: hasLegacyAutoLoadedQuestions(savedSession.questions)
+          ? []
+          : (savedSession.questions || [])
+      };
     } catch {
       return DEFAULT_SESSION;
     }
@@ -471,6 +486,28 @@ export const GameProvider = ({ children }) => {
     broadcastState(updatedSession, {});
   }, [broadcastState]);
 
+  const removeTeam = useCallback((teamName) => {
+    const currentSession = sessionRef.current;
+    const removedIndex = currentSession.teamOrder.indexOf(teamName);
+    if (removedIndex === -1) return;
+
+    const updatedTeamOrder = currentSession.teamOrder.filter(team => team !== teamName);
+    const nextCurrentTeamIndex = removedIndex < currentSession.currentTeamIndex
+      ? currentSession.currentTeamIndex - 1
+      : currentSession.currentTeamIndex;
+    const updatedSession = {
+      ...currentSession,
+      teamOrder: updatedTeamOrder,
+      currentTeamIndex: Math.min(nextCurrentTeamIndex, Math.max(0, updatedTeamOrder.length - 1))
+    };
+    const updatedLeaderboard = { ...leaderboardRef.current };
+    delete updatedLeaderboard[teamName];
+
+    setSession(updatedSession);
+    setLeaderboard(updatedLeaderboard);
+    broadcastState(updatedSession, updatedLeaderboard);
+  }, [broadcastState]);
+
   return (
     <GameContext.Provider
       value={{
@@ -490,7 +527,8 @@ export const GameProvider = ({ children }) => {
         adjustTeamScore,
         setTeamScoreDirectly,
         setQuestionTimeInMinutes,
-        clearAllTeams
+        clearAllTeams,
+        removeTeam
       }}
     >
       {children}

@@ -25,6 +25,7 @@ export const QuestionSetup = () => {
   });
   const [uploadError, setUploadError] = useState('');
   const [uploadSuccess, setUploadSuccess] = useState('');
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   const resetForm = () => {
     setEditingId(null);
@@ -119,6 +120,13 @@ export const QuestionSetup = () => {
     setUploadSuccess(`Loaded ${SAMPLE_QUESTIONS.length} curated Tech Fest questions!`);
   };
 
+  const handleClearAllQuestions = () => {
+    updateSession({ questions: [], currentQuestionIndex: 0 });
+    setShowClearConfirm(false);
+    resetForm();
+    setUploadSuccess('All questions have been removed.');
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Banner & Bulk Upload Controls */}
@@ -168,6 +176,38 @@ export const QuestionSetup = () => {
             <Sparkles className="w-3.5 h-3.5" />
             Load Tech Sample Set
           </button>
+
+          {questions.length > 0 && (
+            showClearConfirm ? (
+              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-red-500/20 border border-red-500/40">
+                <span className="text-[11px] font-mono text-red-300 px-1">Clear all questions?</span>
+                <button
+                  type="button"
+                  onClick={handleClearAllQuestions}
+                  className="px-2 py-1 rounded-lg text-xs font-mono font-bold uppercase bg-red-600 text-white"
+                >
+                  Yes, Clear
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowClearConfirm(false)}
+                  className="px-2 py-1 text-xs font-mono text-slate-300"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowClearConfirm(true)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono font-bold uppercase bg-red-500/15 hover:bg-red-500/25 text-red-400 border border-red-500/40 transition-all"
+                title="Remove all questions from the round queue"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Clear All Questions
+              </button>
+            )
+          )}
         </div>
       </div>
 
