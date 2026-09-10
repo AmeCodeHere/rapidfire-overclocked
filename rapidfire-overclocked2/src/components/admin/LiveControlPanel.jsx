@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Play, Pause, RotateCcw, Plus, SkipForward, CheckCircle2, 
   XCircle, Zap, Clock, Users, ArrowRight, ShieldAlert,
@@ -21,6 +21,7 @@ export const LiveControlPanel = () => {
     resetTimer,
     addExtraFiveSeconds,
     skipToNextQuestion,
+    concludeRound,
     updateSession,
     setQuestionTimeInMinutes
   } = useGame();
@@ -48,6 +49,7 @@ export const LiveControlPanel = () => {
   const [selectedWinnerTeam, setSelectedWinnerTeam] = useState(currentTeam);
   const [showManualPointsModal, setShowManualPointsModal] = useState(false);
   const [customMinutes, setCustomMinutes] = useState('');
+  const lastCorrectShortcutAtRef = useRef(0);
 
   const handleSetMinutes = (mins) => {
     setQuestionTimeInMinutes(mins);
@@ -87,6 +89,16 @@ export const LiveControlPanel = () => {
   // Note: NO shortcut labels/hints are shown on the UI!
   useKeyboardShortcuts({
     onCorrect: () => {
+      const now = Date.now();
+      const isDoublePress = showInlineCorrect && now - lastCorrectShortcutAtRef.current <= 500;
+      lastCorrectShortcutAtRef.current = now;
+
+      if (isDoublePress) {
+        handleCorrectAnswer(selectedWinnerTeam);
+        setShowInlineCorrect(false);
+        return;
+      }
+
       // Reveal inline dropdown without blocking modal
       setShowInlineCorrect(true);
       setSelectedWinnerTeam(currentTeam);
@@ -248,6 +260,18 @@ export const LiveControlPanel = () => {
             <SkipForward className="w-3.5 h-3.5" />
             Skip Question
           </button>
+
+          {status === 'active' && (
+            <button
+              type="button"
+              onClick={concludeRound}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-mono font-bold uppercase bg-red-500/15 text-red-400 border border-red-500/30 hover:bg-red-500/25 transition-all"
+              title="Conclude the round and stop all timers"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              Conclude Round
+            </button>
+          )}
 
           <button
             type="button"

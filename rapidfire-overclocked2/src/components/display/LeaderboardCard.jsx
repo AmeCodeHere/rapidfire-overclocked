@@ -90,7 +90,7 @@ export const LeaderboardCard = () => {
       </div>
 
       {/* Leaderboard Table List */}
-      <div className="flex-1 overflow-y-auto space-y-2 pr-1 max-h-[480px]">
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-2 pr-1">
         {sortedTeams.length === 0 ? (
           <div className="p-6 text-center text-slate-500 font-mono text-xs">
             No teams registered yet.
@@ -98,7 +98,8 @@ export const LeaderboardCard = () => {
         ) : (
           sortedTeams.map((item, index) => {
             const rank = index + 1;
-            const isTurn = item.name === currentTeamName;
+            const isTurn = session.status === 'active' && item.name === currentTeamName;
+            const isTopFive = rank <= 5;
 
             return (
               <div
@@ -108,9 +109,13 @@ export const LeaderboardCard = () => {
                     ? isDark
                       ? 'bg-overclock-cyan/15 border-overclock-cyan/60 shadow-glow-cyan transform scale-[1.02]'
                       : 'bg-cyan-50 border-cyan-300 shadow-md transform scale-[1.02]'
-                    : isDark
-                      ? 'bg-overclock-dark-850/70 border-overclock-dark-700/60 hover:border-slate-600'
-                      : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
+                    : isTopFive
+                      ? isDark
+                        ? 'bg-yellow-400/10 border-yellow-400/40 shadow-[0_0_18px_rgba(250,204,21,0.12)] hover:border-yellow-300/60'
+                        : 'bg-yellow-50 border-yellow-300 shadow-sm hover:bg-yellow-100'
+                      : isDark
+                        ? 'bg-overclock-dark-850/70 border-overclock-dark-700/60 hover:border-slate-600'
+                        : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0">
@@ -121,10 +126,17 @@ export const LeaderboardCard = () => {
                       <span className={`font-body font-bold text-sm sm:text-base truncate block ${
                         isTurn 
                           ? isDark ? 'text-overclock-cyan font-extrabold' : 'text-cyan-800 font-extrabold'
+                          : isTopFive
+                            ? isDark ? 'text-yellow-200 font-extrabold' : 'text-yellow-900 font-extrabold'
                           : isDark ? 'text-slate-100' : 'text-slate-800'
                       }`}>
                         {item.name}
                       </span>
+                      {isTopFive && !isTurn && (
+                        <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-yellow-400/20 text-yellow-500 border border-yellow-400/30 font-bold uppercase">
+                          Top 5
+                        </span>
+                      )}
                       {isTurn && (
                         <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded font-bold uppercase ${
                           isDark ? 'bg-overclock-cyan text-black' : 'bg-cyan-600 text-white'
@@ -142,6 +154,8 @@ export const LeaderboardCard = () => {
                       ? 'text-yellow-400 font-display'
                       : isTurn
                         ? isDark ? 'text-overclock-cyan' : 'text-cyan-700'
+                        : isTopFive
+                          ? isDark ? 'text-yellow-300' : 'text-yellow-700'
                         : isDark ? 'text-slate-200' : 'text-slate-700'
                   }`}>
                     {item.points}

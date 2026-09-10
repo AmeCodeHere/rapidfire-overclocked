@@ -115,6 +115,33 @@ class SoundSynthesizer {
       console.warn('Synth tick error:', e);
     }
   }
+
+  playRoundConcluded() {
+    try {
+      const ctx = this.getContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const notes = [659.25, 783.99, 987.77, 1318.51];
+
+      notes.forEach((frequency, index) => {
+        const oscillator = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const startTime = now + index * 0.12;
+        oscillator.type = index === 0 ? 'triangle' : 'sine';
+        oscillator.frequency.setValueAtTime(frequency, startTime);
+        gain.gain.setValueAtTime(0.0001, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.32, startTime + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.7);
+        oscillator.connect(gain);
+        gain.connect(ctx.destination);
+        oscillator.start(startTime);
+        oscillator.stop(startTime + 0.72);
+      });
+    } catch (e) {
+      console.warn('Synth round conclusion sound error:', e);
+    }
+  }
+
 }
 
 export const soundSynth = new SoundSynthesizer();

@@ -5,6 +5,7 @@ export const useSoundEffects = () => {
   const correctAudioRef = useRef(null);
   const wrongAudioRef = useRef(null);
   const tickAudioRef = useRef(null);
+  const roundConcludedAudioRef = useRef(null);
 
   // Initialize or get audio elements
   const getAudio = (path, ref) => {
@@ -61,5 +62,18 @@ export const useSoundEffects = () => {
     }
   }, []);
 
-  return { playCorrect, playWrong, playTick };
+  const playRoundConcluded = useCallback(() => {
+    try {
+      const audio = getAudio('/sounds/round-concluded.mp3', roundConcludedAudioRef);
+      audio.currentTime = 0;
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => soundSynth.playRoundConcluded());
+      }
+    } catch (e) {
+      soundSynth.playRoundConcluded();
+    }
+  }, []);
+
+  return { playCorrect, playWrong, playTick, playRoundConcluded };
 };

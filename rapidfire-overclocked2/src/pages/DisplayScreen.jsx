@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import confetti from 'canvas-confetti';
 import { Header } from '../components/common/Header';
 import { QuestionDisplay } from '../components/display/QuestionDisplay';
 import { TurnIndicator } from '../components/display/TurnIndicator';
@@ -7,13 +8,33 @@ import { LeaderboardCard } from '../components/display/LeaderboardCard';
 import { FeedbackFlash } from '../components/display/FeedbackFlash';
 import { useGame } from '../context/GameContext';
 import { useTheme } from '../context/ThemeContext';
+import { useSoundEffects } from '../hooks/useSoundEffects';
 import { Zap, Trophy, Shield } from 'lucide-react';
 
 export const DisplayScreen = () => {
   const { session, leaderboard } = useGame();
   const { isDark } = useTheme();
+  const { playRoundConcluded } = useSoundEffects();
 
   const isEnded = session.status === 'ended';
+
+  useEffect(() => {
+    if (!isEnded) return undefined;
+
+    playRoundConcluded();
+    const celebration = [
+      confetti({ particleCount: 140, spread: 100, startVelocity: 55, origin: { x: 0.1, y: 0.7 } }),
+      confetti({ particleCount: 140, spread: 100, startVelocity: 55, origin: { x: 0.9, y: 0.7 } })
+    ];
+    const followUp = window.setTimeout(() => {
+      confetti({ particleCount: 180, spread: 120, startVelocity: 35, origin: { x: 0.5, y: 0.45 } });
+    }, 450);
+
+    return () => {
+      celebration.forEach(animation => animation?.reset?.());
+      window.clearTimeout(followUp);
+    };
+  }, [isEnded, playRoundConcluded]);
 
   // Find winner if ended
   const topTeam = Object.entries(leaderboard || {})
@@ -27,7 +48,7 @@ export const DisplayScreen = () => {
       <Header subtitle="AUDIENCE PROJECTOR DISPLAY" />
 
       {/* Main Production Stage Container */}
-      <main className="flex-1 max-w-[1600px] w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col gap-6">
+      <main className="flex-1 w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col gap-6">
         {/* Top Production Telemetry Bar: Event Title & Round Timer */}
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -79,15 +100,15 @@ export const DisplayScreen = () => {
           </div>
         ) : (
           /* Live Game Grid: Main Arena & Leaderboard */
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 flex-1 items-start">
+          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,2fr)_minmax(360px,1fr)] gap-6 flex-1 items-stretch">
             {/* Left 8 Cols: Current Turn Indicator & Large Question Card */}
-            <div className="xl:col-span-8 flex flex-col gap-6">
+            <div className="min-w-0 flex flex-col gap-6">
               <TurnIndicator />
               <QuestionDisplay />
             </div>
 
             {/* Right 4 Cols: Live Tournament Leaderboard */}
-            <div className="xl:col-span-4 h-full">
+            <div className="min-w-0 h-full">
               <LeaderboardCard />
             </div>
           </div>

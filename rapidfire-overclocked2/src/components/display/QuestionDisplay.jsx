@@ -9,7 +9,9 @@ export const QuestionDisplay = () => {
 
   const { questions, currentQuestionIndex, attemptedTeamsForCurrentQuestion = [], currentTeamTimeRemaining = 0 } = session;
   const totalQuestions = questions ? questions.length : 0;
-  const currentQ = questions && questions[currentQuestionIndex] ? questions[currentQuestionIndex] : null;
+  const currentQ = session.status === 'active' && questions && questions[currentQuestionIndex]
+    ? questions[currentQuestionIndex]
+    : null;
   const passCount = attemptedTeamsForCurrentQuestion.length;
   const currentQuestionMultiplier = passCount + 1;
   const currentPassBonus = currentQuestionMultiplier * Math.max(0, currentTeamTimeRemaining);

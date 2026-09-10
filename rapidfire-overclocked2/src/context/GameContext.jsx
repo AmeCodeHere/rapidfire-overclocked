@@ -65,7 +65,11 @@ export const GameProvider = ({ children }) => {
   const timerIntervalRef = useRef(null);
   const isUpdatingFromRemoteRef = useRef(false);
 
-  const { playCorrect, playWrong, playTick } = useSoundEffects();
+  const {
+    playCorrect,
+    playWrong,
+    playTick
+  } = useSoundEffects();
 
   // Keep ref to latest state for interval operations
   const sessionRef = useRef(session);
@@ -209,17 +213,31 @@ export const GameProvider = ({ children }) => {
     }
   }, [session.flashEvent?.id, playCorrect, playWrong]);
 
-  // Audio tick trigger during final 3 seconds
+  // Tick throughout the round; accelerate when either timer is nearly done.
   useEffect(() => {
-    if (session.timerStatus === 'running' && session.currentTeamTimeRemaining <= 3 && session.currentTeamTimeRemaining > 0) {
-      playTick();
-    }
-  }, [session.timerStatus, session.currentTeamTimeRemaining, playTick]);
+    if (session.status !== 'active' || session.timerStatus !== 'running') return undefined;
+
+    const lowestTime = Math.min(
+      session.currentTeamTimeRemaining,
+      session.totalRoundTimeRemaining
+    );
+    const tickInterval = lowestTime <= 3 ? 250 : lowestTime <= 10 ? 500 : 1000;
+    playTick();
+    const interval = window.setInterval(playTick, tickInterval);
+
+    return () => window.clearInterval(interval);
+  }, [
+    session.status,
+    session.timerStatus,
+    session.currentTeamTimeRemaining,
+    session.totalRoundTimeRemaining,
+    playTick
+  ]);
 
   // GAME ACTION HANDLERS
 
   // Handle WRONG answer or auto-timeout
-  const handleWrongAnswer = useCallback(() => {
+  const handleWrongAnswer = useCallback((roundTimeRemaining) => {
     const currentSess = sessionRef.current;
     const {
       questions,
@@ -229,6 +247,7 @@ export const GameProvider = ({ children }) => {
       attemptedTeamsForCurrentQuestion,
       perTeamTimerDurationSeconds
     } = currentSess;
+    const nextRoundTime = roundTimeRemaining ?? currentSess.totalRoundTimeRemaining;
 
     if (!teamOrder || teamOrder.length === 0) return;
 
@@ -266,7 +285,9 @@ export const GameProvider = ({ children }) => {
         attemptedTeamsForCurrentQuestion: [],
         currentTeamTimeRemaining: perTeamTimerDurationSeconds,
         flashEvent: flash,
-        status: isRoundOver ? 'ended' : currentSess.status
+        totalRoundTimeRemaining: nextRoundTime,
+        status: isRoundOver ? 'ended' : currentSess.status,
+        timerStatus: isRoundOver ? 'stopped' : currentSess.timerStatus
       });
     } else {
       // Pass SAME question to NEXT team in seating order
@@ -276,7 +297,8 @@ export const GameProvider = ({ children }) => {
         currentTeamIndex: nextTeamIdx,
         attemptedTeamsForCurrentQuestion: newAttempted,
         currentTeamTimeRemaining: perTeamTimerDurationSeconds,
-        flashEvent: flash
+        flashEvent: flash,
+        totalRoundTimeRemaining: nextRoundTime
       });
     }
   }, [updateSession]);
@@ -332,13 +354,23 @@ export const GameProvider = ({ children }) => {
       attemptedTeamsForCurrentQuestion: [],
       currentTeamTimeRemaining: perTeamTimerDurationSeconds,
       flashEvent: flash,
-      status: isRoundOver ? 'ended' : currentSess.status
+      status: isRoundOver ? 'ended' : currentSess.status,
+      timerStatus: isRoundOver ? 'stopped' : currentSess.timerStatus
     };
 
     setSession(updatedSession);
     setLeaderboard(newLeaderboard);
     broadcastState(updatedSession, newLeaderboard);
   }, [broadcastState]);
+
+  const concludeRound = useCallback(() => {
+    updateSession({
+      status: 'ended',
+      timerStatus: 'stopped',
+      totalRoundTimeRemaining: 0,
+      currentTeamTimeRemaining: 0
+    });
+  }, [updateSession]);
 
   // Timer Tick (Active host execution)
   const tickTimer = useCallback(() => {
@@ -348,16 +380,21 @@ export const GameProvider = ({ children }) => {
     let newTeamTime = currentSess.currentTeamTimeRemaining - 1;
     let newRoundTime = Math.max(0, currentSess.totalRoundTimeRemaining - 1);
 
+    if (newRoundTime <= 0) {
+      concludeRound();
+      return;
+    }
+
     if (newTeamTime <= 0) {
       // Auto timeout: trigger WRONG answer logic
-      handleWrongAnswer();
+      handleWrongAnswer(newRoundTime);
     } else {
       updateSession({
         currentTeamTimeRemaining: newTeamTime,
         totalRoundTimeRemaining: newRoundTime
       });
     }
-  }, [handleWrongAnswer, updateSession]);
+  }, [concludeRound, handleWrongAnswer, updateSession]);
 
   // Start timer runner interval (only on host admin tab to avoid multi-tab clock collision)
   useEffect(() => {
@@ -413,7 +450,8 @@ export const GameProvider = ({ children }) => {
       currentTeamIndex: nextTeamIdx,
       attemptedTeamsForCurrentQuestion: [],
       currentTeamTimeRemaining: perTeamTimerDurationSeconds,
-      status: isRoundOver ? 'ended' : currentSess.status
+      status: isRoundOver ? 'ended' : currentSess.status,
+      timerStatus: isRoundOver ? 'stopped' : currentSess.timerStatus
     });
   }, [updateSession]);
 
@@ -520,6 +558,7 @@ export const GameProvider = ({ children }) => {
         resetTimer,
         addExtraFiveSeconds,
         skipToNextQuestion,
+        concludeRound,
         resetRound,
         adjustTeamScore,
         setTeamScoreDirectly,
