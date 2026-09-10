@@ -7,9 +7,12 @@ export const QuestionDisplay = () => {
   const { session } = useGame();
   const { isDark } = useTheme();
 
-  const { questions, currentQuestionIndex } = session;
+  const { questions, currentQuestionIndex, attemptedTeamsForCurrentQuestion = [], currentTeamTimeRemaining = 0 } = session;
   const totalQuestions = questions ? questions.length : 0;
   const currentQ = questions && questions[currentQuestionIndex] ? questions[currentQuestionIndex] : null;
+  const passCount = attemptedTeamsForCurrentQuestion.length;
+  const currentQuestionMultiplier = passCount + 1;
+  const currentPassBonus = currentQuestionMultiplier * Math.max(0, currentTeamTimeRemaining);
 
   if (!currentQ) {
     return (
@@ -72,13 +75,14 @@ export const QuestionDisplay = () => {
         </div>
 
         {/* Attempt indicator */}
-        {session.attemptedTeamsForCurrentQuestion && session.attemptedTeamsForCurrentQuestion.length > 0 && (
-          <div className={`text-xs font-mono px-3 py-1 rounded-full border ${
+        {passCount > 0 && (
+          <div className={`text-xs font-mono px-3 py-1 rounded-full border flex items-center gap-2 ${
             isDark 
               ? 'bg-overclock-red/10 border-overclock-red/30 text-overclock-red' 
               : 'bg-red-50 border-red-200 text-red-600'
           }`}>
-            Passed {session.attemptedTeamsForCurrentQuestion.length} time(s)
+            <span>Passed {passCount} time{passCount === 1 ? '' : 's'}</span>
+            <span className="font-black text-overclock-orange">Next bonus: +{currentPassBonus}</span>
           </div>
         )}
       </div>

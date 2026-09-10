@@ -15,7 +15,6 @@ const DEFAULT_SESSION = {
   currentTeamIndex: 0,
   attemptedTeamsForCurrentQuestion: [],
   basePointsPerCorrectAnswer: 10,
-  speedBonusMultiplier: 1,
   perTeamTimerDurationSeconds: 60, // 1 minute default
   currentTeamTimeRemaining: 60,
   totalRoundTimerDurationSeconds: 600, // 10 minutes
@@ -239,11 +238,16 @@ export const GameProvider = ({ children }) => {
       newAttempted.push(currentTeam);
     }
 
+    const nextTeamBonusMultiplier = newAttempted.length + 1;
+    const nextTeamBonusPoints = nextTeamBonusMultiplier * perTeamTimerDurationSeconds;
+
     const flash = {
       id: `flash-${Date.now()}`,
       type: 'wrong',
       teamName: currentTeam,
       pointsAwarded: 0,
+      nextTeamBonusMultiplier,
+      nextTeamBonusPoints,
       timestamp: Date.now()
     };
 
@@ -287,15 +291,15 @@ export const GameProvider = ({ children }) => {
       teamOrder,
       currentTeamIndex,
       basePointsPerCorrectAnswer,
-      speedBonusMultiplier,
       perTeamTimerDurationSeconds,
       currentTeamTimeRemaining,
-      turnCycleMode
     } = currentSess;
 
     const targetTeam = winningTeamName || teamOrder[currentTeamIndex];
     const timeRemaining = Math.max(0, currentTeamTimeRemaining);
-    const speedBonus = speedBonusMultiplier * timeRemaining;
+    const passCount = (currentSess.attemptedTeamsForCurrentQuestion || []).length;
+    const currentQuestionMultiplier = passCount + 1;
+    const speedBonus = currentQuestionMultiplier * timeRemaining;
     const totalAwarded = basePointsPerCorrectAnswer + speedBonus;
 
     // Update leaderboard
@@ -310,22 +314,16 @@ export const GameProvider = ({ children }) => {
       teamName: targetTeam,
       pointsAwarded: totalAwarded,
       basePoints: basePointsPerCorrectAnswer,
+      multiplier: currentQuestionMultiplier,
       speedBonus: speedBonus,
       timeRemaining: timeRemaining,
       timestamp: Date.now()
     };
 
-    // Determine next question & next team
+    // A correct answer completes this team's turn and advances to a new question.
     const nextQIndex = currentQuestionIndex + 1;
     const isRoundOver = nextQIndex >= questions.length;
-
-    // Turn cycle logic: default "continue" from next team in order, or "restart" from top
-    let nextTeamIdx;
-    if (turnCycleMode === 'restart') {
-      nextTeamIdx = 0;
-    } else {
-      nextTeamIdx = (currentTeamIndex + 1) % teamOrder.length;
-    }
+    const nextTeamIdx = (currentTeamIndex + 1) % teamOrder.length;
 
     const updatedSession = {
       ...currentSess,
@@ -425,7 +423,6 @@ export const GameProvider = ({ children }) => {
       questions: sessionRef.current.questions,
       teamOrder: sessionRef.current.teamOrder,
       basePointsPerCorrectAnswer: sessionRef.current.basePointsPerCorrectAnswer,
-      speedBonusMultiplier: sessionRef.current.speedBonusMultiplier,
       perTeamTimerDurationSeconds: sessionRef.current.perTeamTimerDurationSeconds,
       totalRoundTimerDurationSeconds: sessionRef.current.totalRoundTimerDurationSeconds,
       currentTeamTimeRemaining: sessionRef.current.perTeamTimerDurationSeconds,

@@ -9,10 +9,8 @@ export const ScoringSetup = () => {
 
   const {
     basePointsPerCorrectAnswer = 10,
-    speedBonusMultiplier = 1,
     perTeamTimerDurationSeconds = 15,
-    totalRoundTimerDurationSeconds = 600,
-    turnCycleMode = 'continue'
+    totalRoundTimerDurationSeconds = 600
   } = session;
 
   const handleChange = (key, value) => {
@@ -63,40 +61,6 @@ export const ScoringSetup = () => {
               }`}
             />
             <span className="text-xs font-mono text-slate-500">points (Default: 10)</span>
-          </div>
-        </div>
-
-        {/* Speed Bonus Multiplier */}
-        <div className={`p-5 rounded-2xl border ${
-          isDark ? 'bg-overclock-dark-900 border-overclock-dark-700' : 'bg-white border-slate-200 shadow-sm'
-        }`}>
-          <div className="flex items-center gap-2 mb-3">
-            <div className="p-2 rounded-xl bg-overclock-orange/15 text-overclock-orange border border-overclock-orange/30">
-              <Clock className="w-4 h-4" />
-            </div>
-            <div>
-              <h4 className={`font-display font-bold text-sm uppercase ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                Speed Bonus Multiplier
-              </h4>
-              <p className="text-[11px] font-mono text-slate-400">Points per remaining second on team timer.</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <input
-              type="number"
-              min="0"
-              max="10"
-              step="0.5"
-              value={speedBonusMultiplier}
-              onChange={(e) => handleChange('speedBonusMultiplier', Math.max(0, Number(e.target.value)))}
-              className={`w-32 px-4 py-2.5 rounded-xl font-mono text-lg font-bold border focus:outline-none ${
-                isDark
-                  ? 'bg-overclock-dark-950 border-overclock-dark-700 text-white focus:border-overclock-orange'
-                  : 'bg-slate-50 border-slate-300 text-slate-900 focus:border-overclock-orange'
-              }`}
-            />
-            <span className="text-xs font-mono text-slate-500">pts/sec (Default: 1 pt/sec)</span>
           </div>
         </div>
 
@@ -236,70 +200,15 @@ export const ScoringSetup = () => {
         </div>
       </div>
 
-      {/* Turn Cycle Configuration */}
       <div className={`p-5 rounded-2xl border ${
         isDark ? 'bg-overclock-dark-900 border-overclock-dark-700' : 'bg-white border-slate-200 shadow-sm'
       }`}>
         <h4 className={`font-display font-bold text-sm uppercase mb-1 ${isDark ? 'text-white' : 'text-slate-900'}`}>
-          Turn Sequencing Mode (After a Correct Answer)
+          Equal Team Turns
         </h4>
-        <p className="text-xs font-mono text-slate-400 mb-4">
-          Determines which team receives the next question after a team answers correctly.
+        <p className="text-xs font-mono text-slate-400">
+          Each turn advances to the next team and a new question after a correct answer. Incorrect answers pass the current question to the next team.
         </p>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <label className={`p-4 rounded-2xl border flex items-start gap-3 cursor-pointer transition-all ${
-            turnCycleMode === 'continue'
-              ? isDark 
-                ? 'bg-overclock-cyan/10 border-overclock-cyan shadow-glow-cyan' 
-                : 'bg-cyan-50 border-cyan-400'
-              : isDark ? 'bg-overclock-dark-950 border-overclock-dark-800' : 'bg-slate-50 border-slate-200'
-          }`}>
-            <input
-              type="radio"
-              name="turnCycleMode"
-              checked={turnCycleMode === 'continue'}
-              onChange={() => handleChange('turnCycleMode', 'continue')}
-              className="mt-1"
-            />
-            <div>
-              <span className={`font-display font-bold text-sm block ${
-                turnCycleMode === 'continue' ? (isDark ? 'text-overclock-cyan' : 'text-cyan-800') : (isDark ? 'text-slate-300' : 'text-slate-700')
-              }`}>
-                Continue From Next Team (Recommended)
-              </span>
-              <span className="text-xs font-mono text-slate-400">
-                Rotates naturally around seating order so all teams get equal chances at fresh questions.
-              </span>
-            </div>
-          </label>
-
-          <label className={`p-4 rounded-2xl border flex items-start gap-3 cursor-pointer transition-all ${
-            turnCycleMode === 'restart'
-              ? isDark 
-                ? 'bg-overclock-orange/10 border-overclock-orange shadow-glow-orange' 
-                : 'bg-orange-50 border-orange-400'
-              : isDark ? 'bg-overclock-dark-950 border-overclock-dark-800' : 'bg-slate-50 border-slate-200'
-          }`}>
-            <input
-              type="radio"
-              name="turnCycleMode"
-              checked={turnCycleMode === 'restart'}
-              onChange={() => handleChange('turnCycleMode', 'restart')}
-              className="mt-1"
-            />
-            <div>
-              <span className={`font-display font-bold text-sm block ${
-                turnCycleMode === 'restart' ? (isDark ? 'text-overclock-orange' : 'text-orange-800') : (isDark ? 'text-slate-300' : 'text-slate-700')
-              }`}>
-                Restart From Team #1
-              </span>
-              <span className="text-xs font-mono text-slate-400">
-                Every fresh question always starts with the first team in the seating order.
-              </span>
-            </div>
-          </label>
-        </div>
       </div>
     </div>
   );

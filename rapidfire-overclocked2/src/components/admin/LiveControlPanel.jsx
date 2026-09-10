@@ -32,10 +32,10 @@ export const LiveControlPanel = () => {
     currentQuestionIndex = 0,
     teamOrder = [],
     currentTeamIndex = 0,
+    attemptedTeamsForCurrentQuestion = [],
     currentTeamTimeRemaining = 60,
     perTeamTimerDurationSeconds = 60,
     basePointsPerCorrectAnswer = 10,
-    speedBonusMultiplier = 1,
     timerStatus = 'paused',
     status = 'setup'
   } = session;
@@ -77,8 +77,11 @@ export const LiveControlPanel = () => {
 
   // Points calculation breakdown
   const timeRemaining = Math.max(0, currentTeamTimeRemaining);
-  const speedBonus = speedBonusMultiplier * timeRemaining;
+  const passCount = attemptedTeamsForCurrentQuestion.length;
+  const currentQuestionMultiplier = passCount + 1;
+  const speedBonus = currentQuestionMultiplier * timeRemaining;
   const totalCalculatedPoints = basePointsPerCorrectAnswer + speedBonus;
+  const currentPassBonus = speedBonus;
 
   // Silent keyboard shortcut handler
   // Note: NO shortcut labels/hints are shown on the UI!
@@ -316,6 +319,29 @@ export const LiveControlPanel = () => {
               </div>
             </div>
 
+            {passCount > 0 && (
+              <div className={`p-4 rounded-2xl mb-5 border flex items-center justify-between gap-4 ${
+                isDark ? 'bg-overclock-orange/10 border-overclock-orange/40' : 'bg-orange-50 border-orange-200'
+              }`}>
+                <div>
+                  <span className="text-[10px] font-mono tracking-widest uppercase text-overclock-orange block font-bold">
+                    QUESTION PASSED {passCount} TIME{passCount === 1 ? '' : 'S'}
+                  </span>
+                  <p className={`text-xs font-mono mt-1 ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                    Bonus increases for this team if they answer correctly.
+                  </p>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className="font-mono font-black text-lg text-overclock-orange">
+                    {currentQuestionMultiplier}x
+                  </div>
+                  <div className={`text-[10px] font-mono uppercase ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                    +{currentPassBonus} bonus pts
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Question Text & Answer */}
             {currentQ ? (
               <div className="space-y-4">
@@ -422,7 +448,7 @@ export const LiveControlPanel = () => {
                         Score Breakdown
                       </span>
                       <span className="text-xs font-mono font-medium">
-                        Base ({basePointsPerCorrectAnswer}) + Bonus ({speedBonusMultiplier} &times; {timeRemaining}s = {speedBonus})
+                        Base ({basePointsPerCorrectAnswer}) + Pass Bonus ({currentQuestionMultiplier} &times; {timeRemaining}s = {speedBonus})
                       </span>
                     </div>
 
